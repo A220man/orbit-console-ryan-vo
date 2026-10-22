@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Backend tests
+  backend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Run backend tests
+        run: |
+          .venv/bin/python -m pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
+        env:
+          PYTHONPATH: ./backend
+
+      - name: Check code formatting
+        run: |
+          .venv/bin/pip install ruff
+          .venv/bin/ruff check app/ tests/
+
+  # Frontend tests
+  frontend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run build 2>&1 | head -50
+
+      - name: Run frontend tests
+        run: npm test -- --run
+
+      - name: Check linting
+        run: npm run lint
+
+  # Build Docker images
+  docker-build:
+    needs: [backend-test, frontend-test]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+          load: true
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+          load: true
+
+      - name: Test backend image
+        run: |
+          docker run --rm -d --name backend-test \
+            -e ENVIRONMENT=test \
+            -e SECRET_KEY=test-secret-key-for-testing-only-32-chars \
+            -e DATABASE_URL=sqlite+aiosqlite:///:memory: \
+            -p 8000:8000 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+          sleep 10
+          curl -f http://localhost:8000/api/v1/health/live
+          docker stop backend-test
+
+      - name: Test frontend image
+        run: |
+          docker run --rm -d --name frontend-test \
+            -p 3000:3000 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+          sleep 5
+          curl -f http://localhost:3000/health
+          docker stop frontend-test
+
+  # Integration test
+  integration-test:
+    needs: [backend-test, frontend-test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start services
+        run: |
+          docker compose up -d keycloak backend frontend
+          sleep 30
+
+      - name: Test backend health
+        run: |
+          curl -f http://127.0.0.1:8000/api/v1/health/ready
+
+      - name: Test frontend health
+        run: |
+          curl -f http://127.0.0.1:3000/health
+
+      - name: Run integration test
+        run: |
+          # Create actor
+          ACTOR_RESPONSE=$(curl -s -X POST http://127.0.0.1:8000/api/v1/actors \
+            -H "Content-Type: application/json" \
+            -d '{"uid":"test-actor","name":"Test Actor","atespace":"default","template_namespace":"default","template_name":"test"}')
+          echo "Actor created: $ACTOR_RESPONSE"
+
+          # List actors
+          curl -f http://127.0.0.1:8000/api/v1/actors
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v

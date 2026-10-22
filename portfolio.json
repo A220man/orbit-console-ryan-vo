@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "orbit-console-ryan-vo",
+  "owner": "A220man",
+  "email": "ryandtvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: orbit-console-ryan-vo",
+  "workflows": [
+    "Actor lifecycle management: create, pause, resume, commit, revert, and dump actors through state machine transitions",
+    "Telemetry dashboard with ate.actors gauge by status/template and ate.actor.crashes counter with bounded cardinality",
+    "Cooperative self-suspend workflow where actors yield via well-known file for idle detection"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}
