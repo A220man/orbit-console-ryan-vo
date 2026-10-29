@@ -1,15 +1,13 @@
 /** Component tests */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Card, CardContent } from '../components/ui/Card';
-import { Modal, ConfirmDialog } from '../components/ui/Modal';
-import { cn } from '../lib/utils';
+import { AuthProvider, useAuth } from '../src/hooks/useAuth';
+import { Card, CardContent } from '../src/components/ui/Card';
+import { Modal, ConfirmDialog } from '../src/components/ui/Modal';
+import { cn } from '../src/lib/utils';
 
 // Test wrapper
 const queryClient = new QueryClient({
