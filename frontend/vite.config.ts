@@ -32,5 +32,11 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
     globals: true,
+    transformMode: {
+      web: [/\.[jt]sx$/],
+    },
+    deps: {
+      inline: ['@testing-library/react'],
+    },
   },
 })

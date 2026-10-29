@@ -1,15 +1,13 @@
 /** Hook tests */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useAuth } from '../hooks/useAuth';
-import { useActors } from '../hooks/useActors';
-import { useTelemetry } from '../hooks/useTelemetry';
-import { api } from '../api/client';
+import { useAuth, AuthProvider } from '../src/hooks/useAuth';
+import { useActors } from '../src/hooks/useActors';
+import { api } from '../src/api/client';
 
-// Mock API
-vi.mock('../api/client', () => ({
+vi.mock('../src/api/client', () => ({
   api: {
     getToken: vi.fn(),
     getOIDCConfig: vi.fn(),
@@ -49,6 +47,16 @@ function wrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
+function authWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        {children}
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
 describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -56,7 +64,7 @@ describe('useAuth', () => {
   });
 
   it('returns unauthenticated state initially', () => {
-    const { result } = renderHook(() => useAuth(), { wrapper });
+    const { result } = renderHook(() => useAuth(), { wrapper: authWrapper });
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.isLoading).toBe(true);
