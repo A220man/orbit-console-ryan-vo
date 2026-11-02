@@ -33,6 +33,7 @@ export function Modal({ isOpen, onClose, title, description, children, footer, s
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
+        data-testid="modal-backdrop"
       >
         <div
           className={cn('w-full bg-white rounded-xl shadow-xl', sizes[size])}
