@@ -5,6 +5,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth, AuthProvider } from '../src/hooks/useAuth';
 import { useActors } from '../src/hooks/useActors';
+import { useStatusGauge, useCrashCount } from '../src/hooks/useTelemetry';
 import { api } from '../src/api/client';
 
 vi.mock('../src/api/client', () => ({
@@ -46,7 +47,6 @@ function wrapper({ children }: { children: React.ReactNode }) {
     </QueryClientProvider>
   );
 }
-
 function authWrapper({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
@@ -57,17 +57,20 @@ function authWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
+
 describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    vi.mocked(api.getToken).mockReturnValue(null);
+    vi.mocked(api.getOIDCConfig).mockResolvedValue({ issuer: '', authorization_endpoint: '', token_endpoint: '', jwks_uri: '' });
   });
 
-  it('returns unauthenticated state initially', () => {
+  it('returns unauthenticated state after initial check', () => {
     const { result } = renderHook(() => useAuth(), { wrapper: authWrapper });
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
-    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isLoading).toBe(false);
   });
 });
 

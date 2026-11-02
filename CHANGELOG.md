@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.2.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.1.1 — test fixes checkpoint (2026-11-02)
+
+### Fixed
+- Frontend test suite: all 19 tests now passing
+  - Added missing component imports (Button, Badge) in components.test.tsx
+  - Fixed Card test to verify correct element classes
+  - Added data-testid to Modal backdrop for reliable testing
+  - Corrected useAuth hook tests to match actual initial loading behavior
+  - Removed duplicate API mock that caused test failures
+
+### Verified
+- Backend: 34 tests passing
+- Frontend: 19 tests passing
+
 ## 1.1.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.

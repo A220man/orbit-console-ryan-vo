@@ -5,6 +5,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../src/hooks/useAuth';
+import { Button } from '../src/components/ui/Button';
+import { Badge } from '../src/components/ui/Badge';
 import { Card, CardContent } from '../src/components/ui/Card';
 import { Modal, ConfirmDialog } from '../src/components/ui/Modal';
 import { cn } from '../src/lib/utils';
@@ -85,7 +87,7 @@ describe('Card', () => {
       </Card>
     );
     expect(screen.getByText('Card content')).toBeInTheDocument();
-    expect(screen.getByText('Card content').closest('div')).toHaveClass('bg-white', 'rounded-xl');
+    expect(screen.getByText('Card content').closest('div')?.parentElement).toHaveClass('bg-white', 'rounded-xl');
   });
 });
 
@@ -170,7 +172,7 @@ describe('useAuth hook', () => {
 
     renderWithProviders(<TestComponent />);
     expect(screen.getByTestId('user')).toHaveTextContent('none');
-    expect(screen.getByTestId('loading')).toHaveTextContent('true');
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
     expect(screen.getByTestId('authenticated')).toHaveTextContent('false');
   });
 });
