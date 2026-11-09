@@ -1,0 +1,75 @@
+# Product development plan
+
+Each round completes one feature or repair. Future items are planned, not implemented claims.
+
+## Current round
+
+self-suspend-workflow
+
+## Roadmap
+
+### project-skeleton — Project skeleton with FastAPI/React, Docker, CI
+
+Status: done
+
+Acceptance:
+- Backend FastAPI app runs with SQLite
+- Frontend React+TS+Vite builds and runs
+- Docker compose with backend, frontend, Keycloak
+- CI workflow runs backend/frontend tests
+- Basic project structure with all required files
+
+### actor-state-machine — Actor state machine domain engine
+
+Status: done
+
+Acceptance:
+- Actor model with RUNNING/PAUSED/SUSPENDED/CRASHED states
+- State transition API with validation
+- Snapshot management (full/data scopes)
+- Actor CRUD and lifecycle endpoints
+
+### telemetry-dashboard — Telemetry dashboard with actor metrics
+
+Status: done
+
+Acceptance:
+- Actor count gauge by status/template
+- Crash counter metric
+- Per-template telemetry attribution display
+- Bounded cardinality metric visualization
+
+### self-suspend-workflow — Actor self-suspend cooperative workflow
+
+Status: done
+
+Acceptance:
+- Actors can yield via well-known file
+- Pause endpoint triggers snapshot
+- Timer-based auto-escalation to SUSPENDED
+
+Implementation:
+- backend/app/models/actor.py (added suspend_timer_seconds and timer_started_at fields)
+- backend/app/services/actor.py (updated pause_actor, added escalate_expired_paused_actors)
+- backend/app/api/actors.py (pause endpoint already accepts timer_seconds)
+- backend/app/main.py (added background task for timer escalation)
+- backend/tests/test_actor.py (added 3 tests for self-suspend workflow)
+
+### oidc-auth — OIDC authentication with Keycloak
+
+Status: planned
+
+Acceptance:
+- SPA PKCE flow with in-memory tokens
+- Backend token validation
+- Role-based authorization (viewer/operator/admin)
+- Login/logout flows working
+
+### self-suspend-workflow — Actor self-suspend cooperative workflow
+
+Status: done
+
+Acceptance:
+- Actors can yield via well-known file
+- Pause endpoint triggers snapshot
+- Timer-based auto-escalation to SUSPENDED

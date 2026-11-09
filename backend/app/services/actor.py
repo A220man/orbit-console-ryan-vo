@@ -247,6 +247,14 @@ async def pause_actor(
     """Pause actor (RUNNING -> PAUSED). Creates local snapshot."""
     actor = await transition_actor_state(db, actor_id, ActorStatus.PAUSED)
 
+    # Set timer fields for self-suspend workflow
+    if timer_seconds is not None and timer_seconds > 0:
+        actor.suspend_timer_seconds = timer_seconds
+        actor.timer_started_at = datetime.now(UTC)
+    else:
+        actor.suspend_timer_seconds = None
+        actor.timer_started_at = None
+
     # Create pause snapshot
     scope = snapshot_scope or actor.snapshot_scope
     snapshot = Snapshot(
@@ -509,3 +517,43 @@ async def get_crash_count(
 
     result = await db.execute(query)
     return result.scalar_one() or 0
+
+
+async def escalate_expired_paused_actors(db: AsyncSession) -> int:
+    """Check for PAUSED actors with expired timers and escalate them to SUSPENDED.
+    
+    Returns the number of actors escalated.
+    """
+    from datetime import datetime, UTC, timedelta
+    from sqlalchemy import select, and_
+    
+    now = datetime.now(UTC)
+    
+    # Find PAUSED actors with a timer that has expired
+    query = select(Actor).where(
+        and_(
+            Actor.status == ActorStatus.PAUSED,
+            Actor.suspend_timer_seconds.isnot(None),
+            Actor.suspend_timer_seconds > 0,
+            Actor.timer_started_at.isnot(None),
+        )
+    )
+    result = await db.execute(query)
+    actors = result.scalars().all()
+    
+    escalated_count = 0
+    for actor in actors:
+        if actor.timer_started_at:
+            elapsed = (now - actor.timer_started_at).total_seconds()
+            if elapsed >= actor.suspend_timer_seconds:
+                # Timer expired, escalate to SUSPENDED
+                await transition_actor_state(db, actor.id, ActorStatus.SUSPENDED, force=True)
+                # Clear timer fields
+                actor.suspend_timer_seconds = None
+                actor.timer_started_at = None
+                escalated_count += 1
+    
+    if escalated_count > 0:
+        await db.flush()
+    
+    return escalated_count
