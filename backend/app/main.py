@@ -1,5 +1,4 @@
-"""Main FastAPI application."""
-
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,9 +39,33 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("Database initialized")
 
+    # Start background task for self-suspend timer escalation
+    async def escalate_timers():
+        from .services.actor import escalate_expired_paused_actors
+        from .core.database import async_session_maker
+        while True:
+            try:
+                await asyncio.sleep(30)  # Check every 30 seconds
+                async with async_session_maker() as db:
+                    count = await escalate_expired_paused_actors(db)
+                    if count > 0:
+                        await db.commit()
+                        logger.info("Escalated paused actors to suspended", count=count)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error("Error in timer escalation task", error=str(e))
+
+    task = asyncio.create_task(escalate_timers())
+
     yield
 
     # Shutdown
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
     logger.info("Shutting down application")
     await close_db()
     logger.info("Database connections closed")

@@ -46,13 +46,13 @@ class Actor(Base):
 
     # Node/worker assignment
     node_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
-    worker_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Self-suspend timer
+    suspend_timer_seconds: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    timer_started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Snapshot references
     latest_snapshot_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("snapshots.id"), nullable=True)
     paused_snapshot_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("snapshots.id"), nullable=True)
-
-    # Metadata
     labels: Mapped[Dict[str, str]] = mapped_column(SQLiteJSON, default=dict, nullable=False)
     annotations: Mapped[Dict[str, str]] = mapped_column(SQLiteJSON, default=dict, nullable=False)
 

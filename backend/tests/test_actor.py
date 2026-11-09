@@ -307,3 +307,86 @@ async def test_snapshot_scope_validation(test_session: AsyncSession):
 
     actor = await commit_actor(test_session, actor.id, snapshot_scope=SnapshotScope.DATA)
     assert actor.status == ActorStatus.SUSPENDED
+@pytest.mark.asyncio
+async def test_self_suspend_timer(test_session: AsyncSession):
+    """Test self-suspend timer escalation from PAUSED to SUSPENDED."""
+    from datetime import datetime, UTC, timedelta
+    from app.models.actor import ActorStatus
+    from app.services.actor import pause_actor, escalate_expired_paused_actors
+    
+    # Create actor and set to RUNNING
+    actor = await create_actor(
+        test_session,
+        uid="timer-test",
+        name="Timer Test",
+        atespace="default",
+        template_namespace="default",
+        template_name="test",
+    )
+    actor = await transition_actor_state(test_session, actor.id, ActorStatus.RUNNING)
+    
+    # Pause with a timer of 1 second
+    actor = await pause_actor(test_session, actor.id, timer_seconds=1)
+    assert actor.status == ActorStatus.PAUSED
+    assert actor.suspend_timer_seconds == 1
+    assert actor.timer_started_at is not None
+    
+    # Manually set timer_started_at to 2 seconds ago to simulate expiration
+    actor.timer_started_at = datetime.now(UTC) - timedelta(seconds=2)
+    await test_session.flush()
+    
+    # Run escalation - should escalate to SUSPENDED
+    count = await escalate_expired_paused_actors(test_session)
+    assert count == 1
+    
+    # Verify actor is now SUSPENDED
+    await test_session.refresh(actor)
+    assert actor.status == ActorStatus.SUSPENDED
+    assert actor.suspend_timer_seconds is None
+    assert actor.timer_started_at is None
+
+
+@pytest.mark.asyncio
+async def test_self_suspend_no_timer(test_session: AsyncSession):
+    """Test pause without timer does not set timer fields."""
+    from app.models.actor import ActorStatus
+    from app.services.actor import pause_actor
+    
+    actor = await create_actor(
+        test_session,
+        uid="no-timer-test",
+        name="No Timer Test",
+        atespace="default",
+        template_namespace="default",
+        template_name="test",
+    )
+    actor = await transition_actor_state(test_session, actor.id, ActorStatus.RUNNING)
+    
+    # Pause without timer
+    actor = await pause_actor(test_session, actor.id, timer_seconds=None)
+    assert actor.status == ActorStatus.PAUSED
+    assert actor.suspend_timer_seconds is None
+    assert actor.timer_started_at is None
+
+
+@pytest.mark.asyncio
+async def test_self_suspend_zero_timer(test_session: AsyncSession):
+    """Test pause with zero timer does not set timer fields."""
+    from app.models.actor import ActorStatus
+    from app.services.actor import pause_actor
+    
+    actor = await create_actor(
+        test_session,
+        uid="zero-timer-test",
+        name="Zero Timer Test",
+        atespace="default",
+        template_namespace="default",
+        template_name="test",
+    )
+    actor = await transition_actor_state(test_session, actor.id, ActorStatus.RUNNING)
+    
+    # Pause with zero timer
+    actor = await pause_actor(test_session, actor.id, timer_seconds=0)
+    assert actor.status == ActorStatus.PAUSED
+    assert actor.suspend_timer_seconds is None
+    assert actor.timer_started_at is None

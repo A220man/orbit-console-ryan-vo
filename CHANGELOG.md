@@ -1,8 +1,26 @@
 # Changelog
 
-## 1.3.0 — work-in-progress checkpoint
+## 1.4.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.3.0 — work-in-progress checkpoint (2026-11-09)
+
+### Added
+- Self-suspend cooperative workflow for actors
+  - Added `suspend_timer_seconds` and `timer_started_at` fields to Actor model
+  - Updated pause endpoint to accept optional timer for auto-escalation
+  - Added background task that checks for expired pause timers every 30 seconds
+  - Auto-escalates PAUSED actors to SUSPENDED when timer expires
+  - Timer fields cleared on resume or escalation
+
+### Tests
+- Added 3 tests for self-suspend workflow:
+  - Timer escalation from PAUSED to SUSPENDED
+  - Pause without timer (no auto-escalation)
+  - Pause with zero timer (no auto-escalation)
+- All 37 backend tests passing
+- All 19 frontend tests passing
 
 ## 1.2.0 — work-in-progress checkpoint
 
