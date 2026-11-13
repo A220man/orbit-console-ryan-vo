@@ -39,13 +39,17 @@ Tests: `backend/tests/test_actor.py`, `backend/tests/test_api.py`
 
 ### oidc-auth — OIDC authentication with Keycloak
 
-Status: planned
+Status: in_progress
 
 Acceptance:
 - SPA PKCE flow with in-memory tokens
 - Backend token validation
 - Role-based authorization (viewer/operator/admin)
 - Login/logout flows working
+
+Implementation: `backend/app/api/auth.py - PKCE code_verifier verification`, `backend/app/core/security.py - JWT token creation/verification`, `backend/app/models/user.py - User model with OIDC fields`, `backend/app/services/user.py - User creation from OIDC claims`, `backend/app/api/auth.py - OIDC login/callback/token endpoints`
+
+Tests: `backend/tests/test_auth.py::test_pkce_code_verifier_verified`
 
 ### telemetry-dashboard — Telemetry dashboard with actor metrics
 

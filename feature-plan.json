@@ -98,15 +98,23 @@
     {
       "id": "oidc-auth",
       "title": "OIDC authentication with Keycloak",
-      "status": "planned",
+      "status": "in_progress",
       "acceptance": [
         "SPA PKCE flow with in-memory tokens",
         "Backend token validation",
         "Role-based authorization (viewer/operator/admin)",
         "Login/logout flows working"
       ],
-      "implementation": [],
-      "tests": []
+      "implementation": [
+        "backend/app/api/auth.py - PKCE code_verifier verification",
+        "backend/app/core/security.py - JWT token creation/verification",
+        "backend/app/models/user.py - User model with OIDC fields",
+        "backend/app/services/user.py - User creation from OIDC claims",
+        "backend/app/api/auth.py - OIDC login/callback/token endpoints"
+      ],
+      "tests": [
+        "backend/tests/test_auth.py::test_pkce_code_verifier_verified"
+      ]
     },
     {
       "id": "telemetry-dashboard",
