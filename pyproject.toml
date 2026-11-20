@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orbit-console-ryan-vo"
-version = "1.0.0"
+version = "1.6.0"
 description = "Agent Substrate Console - Actor lifecycle and telemetry management"
 readme = "README.md"
 license = {text = "MIT"}
