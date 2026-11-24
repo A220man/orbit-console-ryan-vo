@@ -80,7 +80,14 @@ async def test_operator_can_create_actor(client: AsyncClient, test_session: Asyn
     create_resp = await client.post(
         "/api/v1/actors",
         headers=headers,
-        json={"name": "test-actor", "status": "RUNNING"},
+        json={
+            "uid": "op-actor-001",
+            "name": "test-actor",
+            "atespace": "test-space",
+            "template_namespace": "default",
+            "template_name": "default-template",
+            "status": "RUNNING",
+        },
     )
     assert create_resp.status_code == 201
 
@@ -101,7 +108,14 @@ async def test_admin_can_delete_actor(client: AsyncClient, test_session: AsyncSe
     create_resp = await client.post(
         "/api/v1/actors",
         headers=headers,
-        json={"name": "delete-me", "status": "RUNNING"},
+        json={
+            "uid": "admin-actor-001",
+            "name": "delete-me",
+            "atespace": "test-space",
+            "template_namespace": "default",
+            "template_name": "default-template",
+            "status": "RUNNING",
+        },
     )
     assert create_resp.status_code == 201
     actor_id = create_resp.json()["id"]
