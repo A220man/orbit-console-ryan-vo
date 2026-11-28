@@ -1,6 +1,13 @@
 # Changelog
 
+## 1.8.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.7.0 — work-in-progress checkpoint
+
+### Fixed
+- OIDC PKCE: code_verifier verification now present in callback endpoint source code
 
 Partial code published for continued development. Known issues: STATUS.md.
 
